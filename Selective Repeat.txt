@@ -1,0 +1,131 @@
+Server:
+
+import java.util.*;
+import java.net.*;
+import java.io.*;
+public class selectiveRepeatServer {
+	public static void main(String args[]){
+		int n,p;
+
+		ServerSocket ss = null;
+		DataOutputStream out = null;
+		DataInputStream in = null;
+
+		Scanner scanner = new Scanner(System.in);
+		try{
+			ss = new ServerSocket(9876);
+			System.out.println("Waiting for client...");
+			Socket s = ss.accept();
+			System.out.println("Connection Established");
+
+			in = new DataInputStream(s.getInputStream());
+			out = new DataOutputStream(s.getOutputStream());
+
+			System.out.println("Enter number of packets : ");
+			p = scanner.nextInt();
+			out.write(p);
+			out.flush();
+
+			n=4;
+			System.out.println("Window size : "+n);
+			out.write(n);
+			out.flush();
+
+			boolean loop = true;
+			int sent = 0;
+
+			System.out.println("\nSending frames..");
+			while(loop){
+				for(int i=0;i<n;i++){
+					out.write(sent);
+					sent++;
+					if(sent == p)
+						break;
+
+				}
+				int ack = in.read();
+				System.out.println("Ack Received "+ack);
+				if(ack>=p)
+					break;
+				if(sent == p)
+					break;
+				if(ack<sent){
+					System.out.println("Retransmit "+ack);
+					out.write(ack);
+				}
+			}
+			System.out.println("Transmitted all");
+		}catch(Exception e){
+			e.printStackTrace();
+		}finally{
+			try{
+				out.close();
+				in.close();
+			}catch(IOException e){
+				e.printStackTrace();
+			}
+		}
+	}
+}
+
+Client:
+
+import java.util.*;
+import java.net.*;
+import java.io.*;
+public class selectiveRepeatClient {
+	public static void main(String args[]){
+		try{
+			Random R = new Random();
+			int ack=0;
+			Socket s = new Socket("127.0.0.1",9876);
+
+			DataInputStream in = new DataInputStream(s.getInputStream());
+			DataOutputStream out = new DataOutputStream(s.getOutputStream());
+
+			int p=in.read();
+			System.out.println("Number of packets : "+p);
+
+			int n = in.read();
+			System.out.println("Window size "+n);
+
+			boolean loop = true,lost=false;
+			System.out.println("Frames Received : ");
+
+			int got=0,data;
+			int r = R.nextInt(p-1);
+			while(loop){
+				for(int i=0;i<n;i++){
+					data = in.read();
+					if(data == r){
+						System.out.print("Lost "+r+"|");
+						lost = true;
+						ack = r;
+						r=-1;
+					}else{
+						System.out.print(data+"|");
+						got++;
+						if(!lost)
+							ack = data+1;
+						if(got == p){
+							System.out.println("\nReceived all "+got+" frames");
+							loop = false;
+							break;
+						}
+					}
+				}
+				out.write(ack);
+				System.out.println("\nAck sent "+ack);
+				if(lost){
+					lost = false;
+					data = in.read();
+					System.out.println("Received "+data);
+					got++;
+				}
+			}
+
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+	}
+}

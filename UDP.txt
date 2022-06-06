@@ -1,0 +1,70 @@
+Server:
+
+import java.util.*;
+import java.io.*;
+import java.net.*;
+public class udpServer {
+	public static void main(String args[]) throws Exception{
+		System.out.println("Server is running...");
+		DatagramSocket s = new DatagramSocket(9876);
+		byte[] filename = new byte[1000];
+		byte[] b  = new byte[100000000];
+
+		DatagramPacket name = new DatagramPacket(filename,filename.length);
+		s.receive(name);
+
+		DatagramPacket p = new DatagramPacket(b,b.length);
+		s.receive(p);
+
+		String fname = new String(name.getData()).trim();
+		System.out.println("File Name : "+fname);
+		fname = ".//"+fname;
+
+		String filedata = new String(p.getData()).trim();
+		System.out.println(filedata);
+
+		PrintWriter pw = new PrintWriter(fname);
+		pw.println(filedata);
+
+		pw.close();
+		s.close();
+	}
+
+}
+
+
+Client:
+
+import java.util.*;
+import java.net.*;
+import java.io.*;
+
+public class udpclient {
+	public static void main(String args[]) throws IOException{
+		DatagramSocket c = new DatagramSocket();
+		InetAddress ia = InetAddress.getLocalHost();
+		File f = new File("C:\\Users\\sakshi\\Desktop\\trial1.txt");
+
+		FileReader frdr = new FileReader(f);
+		BufferedReader br = new BufferedReader(frdr);
+		StringBuilder sb1 = new StringBuilder();
+
+		String line;
+		while((line=br.readLine())!=null){
+			sb1.append(line);
+			sb1.append("\n");
+		}
+
+		System.out.println(sb1.toString());
+		byte[] sendName = f.getName().getBytes();
+
+		DatagramPacket p1 = new DatagramPacket(sendName,sendName.length,ia,9876);
+		c.send(p1);
+		byte[] senttoServer = sb1.toString().getBytes();
+		DatagramPacket p2 = new DatagramPacket(senttoServer,senttoServer.length,ia,9876);
+		c.send(p2);
+		System.out.println("File Sent");
+		br.close();
+		c.close();
+	}
+}

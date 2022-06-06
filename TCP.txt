@@ -1,0 +1,68 @@
+Server
+import java.net.*;
+import java.util.*;
+import java.io.*;
+
+public class tcpServer {
+	public static void main(String args[]) throws Exception{
+		ServerSocket ss = new ServerSocket(3000);
+		System.out.println("Server is waiting...");
+		Socket c = ss.accept();
+
+		BufferedReader keyRead = new BufferedReader(new InputStreamReader(System.in));
+		OutputStream ostream = c.getOutputStream();
+		PrintWriter pw = new PrintWriter(ostream,true);
+		InputStream istream = c.getInputStream();
+		BufferedReader receiveRead = new BufferedReader(new InputStreamReader(istream));
+
+		String sendMsg,receiveMsg;
+		while(true){
+			if(!(receiveMsg=receiveRead.readLine()).equals("end")){
+				System.out.println(receiveMsg);
+			}else{
+				break;
+			}
+			sendMsg = keyRead.readLine();
+			pw.println(sendMsg);
+			if(sendMsg.equals("end")){
+				break;
+			}
+			pw.flush();
+		}
+
+		ss.close();
+	}
+}
+
+Client:
+import java.util.*;
+import java.net.*;
+import java.io.*;
+public class tcpClient {
+	public static void main(String args[]) throws Exception{
+		Socket s = new Socket("127.0.0.1",3000);
+		System.out.println("Client is ready....start typing");
+
+		BufferedReader keyRead = new BufferedReader(new InputStreamReader(System.in));
+		OutputStream ostream = s.getOutputStream();
+		PrintWriter pw = new PrintWriter(ostream,true);
+		InputStream istream = s.getInputStream();
+		BufferedReader receiveRead = new BufferedReader(new InputStreamReader(istream));
+
+		String sendMsg,receiveMsg;
+		while(true){
+			sendMsg = keyRead.readLine();
+			pw.println(sendMsg);
+			if(sendMsg.equals("end")){
+				break;
+			}
+			pw.flush();
+			if(!(receiveMsg=receiveRead.readLine()).equals("end")){
+				System.out.println(receiveMsg);
+			}else{
+				break;
+			}
+		}
+		s.close();
+	}
+}
